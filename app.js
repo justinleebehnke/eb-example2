@@ -1,6 +1,7 @@
 var createError = require("http-errors");
 var express = require("express");
 var path = require("path");
+var bodyParser = require("body-parser");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 
@@ -23,16 +24,81 @@ app.use("/", indexRouter);
 app.use("/users", usersRouter);
 
 /* START MY APPLICATION */
+var router = express.Router();
+const jsonParser = bodyParser.json();
+
 const hostIdToGameCommands = new Map();
 const lobbyCommands = [];
 
-app.delete("/", (req, res) => {
+router.delete("/", (req, res) => {
   hostIdToGameCommands.clear();
   while (lobbyCommands.length > 0) {
     lobbyCommands.pop();
   }
   res.send(200);
 });
+
+router.post("/game/:hostId", jsonParser, (req, res) => {
+  const { hostId } = req.params;
+  addCommandToGame(hostId, req.body);
+  res.sendStatus(200);
+});
+
+function addCommandToGame(hostId, command) {
+  const commands = hostIdToGameCommands.get(hostId) || [];
+  commands.push(command);
+  hostIdToGameCommands.set(hostId, commands);
+}
+
+function getGameCommandsAfterIndex(hostId, indexOfNextCommand) {
+  const gameCommands = hostIdToGameCommands.get(hostId) || [];
+  return getCommandsAfterIndex(gameCommands, indexOfNextCommand);
+}
+
+function getCommandsAfterIndex(commands, indexOfNextCommand) {
+  return {
+    indexOfNextCommand: commands.length,
+    newCommands: commands.slice(indexOfNextCommand),
+  };
+}
+
+router.get("/game/:hostId/:indexOfNextCommand", (req, res) => {
+  const { hostId, indexOfNextCommand } = req.params;
+  try {
+    const parsedIndex = parseInt(indexOfNextCommand, 10);
+    if (parsedIndex >= 0) {
+      res.json(getGameCommandsAfterIndex(hostId, parsedIndex));
+    } ellobbyse {
+      res.sendStatus(400);
+    }
+  } catch (err) {
+    res.sendStatus(400);
+  }
+});
+
+router.post("/lobby", jsonParser, (req, res) => {
+  const newCommand = req.body;
+  addCommandToLobby(newCommand);
+  res.sendStatus(200);
+});
+
+router.get("/lobby/:indexOfNextCommand", function (req, res) {
+  const { indexOfNextCommand } = req.params;
+  try {
+    const parsedIndex = parseInt(indexOfNextCommand, 10);
+    if (parsedIndex >= 0) {
+      res.json(getCommandsAfterIndex(lobbyCommands, parsedIndex));
+    } else {
+      res.sendStatus(400);
+    }
+  } catch (err) {
+    res.sendStatus(400);
+  }
+});
+
+function addCommandToLobby(command) {
+  lobbyCommands.push(command);
+}
 
 /* END MY APPLICATION */
 
