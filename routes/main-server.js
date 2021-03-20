@@ -1,5 +1,8 @@
+var bodyParser = require("body-parser");
 var express = require("express");
 var router = express.Router();
+
+const jsonParser = bodyParser.json();
 
 router.get("/", function (req, res, next) {
   res.send("This is the backend for sheephead");
@@ -65,7 +68,7 @@ router.get("/game/:hostId/:indexOfNextCommand", (req, res) => {
     const parsedIndex = parseInt(indexOfNextCommand, 10);
     if (parsedIndex >= 0) {
       res.json(getGameCommandsAfterIndex(hostId, parsedIndex));
-    } ellobbyse {
+    } else {
       res.sendStatus(400);
     }
   } catch (err) {
