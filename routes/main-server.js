@@ -1,12 +1,20 @@
 var express = require("express");
 var router = express.Router();
 
-/* GET users listing. */
 router.get("/", function (req, res, next) {
-  res.send("respond with a resource test");
+  res.send("This is the backend for sheephead");
 });
 
 const lobbyCommands = [];
+const hostIdToGameCommands = new Map();
+
+router.delete("/", (req, res) => {
+  hostIdToGameCommands.clear();
+  while (lobbyCommands.length > 0) {
+    lobbyCommands.pop();
+  }
+  res.send(200);
+});
 
 router.get("/lobby/:indexOfNextCommand", function (req, res) {
   const { indexOfNextCommand } = req.params;
